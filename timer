@@ -1,0 +1,75 @@
+#!/bin/bash
+
+#
+# This tool is a simple timer for OS X that will push a notification to the
+# desktop and play a sound for a set amount of times. The default value is 4
+# and can be changed by changing the number following alertPlays. The sound
+# file can be changed by setting a different file for the variable alertSound.
+# The format to use this script is timer <title> <message> <time>. The time
+# block is a number followed by s, m, h, or d to denote seconds, minutes, hours,
+# or days. Don't forget to move the script into the bin directory
+#
+# A few examples of a valid command follow:
+# timer title message 30s
+# timer "Demo Title" "Demo Msg" 5m
+# timer Break "Get up and move for 5 minutes" 1h
+#
+
+count=0
+alertPlays=4
+alertSound="/System/Library/Sounds/Hero.aiff"
+title="$1"
+message="$2"
+timer="$3"
+unit=${timer: -1}
+seconds=${timer%?}
+
+function playAlert() {
+  printf "\n"
+  date +"Alert initiated at: %r"
+  until [[ "$count" -ge "$alertPlays" ]]; do
+    afplay $alertSound
+    let "count += 1"
+  done
+}
+
+function showNotification() {
+  osascript -e "display notification \"$message\" with title \"$title\""
+}
+
+if [[ $1 == "-h" ]]; then
+  sed -n '3,16p' $0
+else
+  printf "\n"
+  date +"The current time is: %A, %B %d %r"
+  printf "\n"
+
+  case "$unit" in
+    "s" ) date -v +"${seconds}S" +"Timer will go off at: %A, %B %d %r"
+    sleep $timer
+    showNotification
+    playAlert
+      ;;
+      "m" ) date -v +"${seconds}M" +"Timer will go off at: %A, %B %d %r"
+      let "seconds *= 60"
+      sleep $seconds
+      showNotification
+      playAlert
+      ;;
+      "h" ) date -v +"${seconds}H" +"Timer will go off at: %A, %B %d %r"
+      let "seconds *= 3600"
+      sleep $seconds
+      showNotification
+      playAlert
+      ;;
+      "d" ) date -v +"${seconds}d" +"Timer will go off at: %A, %B %d %r"
+      let "seconds *= 86400"
+      sleep $seconds
+      showNotification
+      playAlert
+      ;;
+  esac
+
+  printf "\n"
+  date +"Timer completed at: %r"
+fi
